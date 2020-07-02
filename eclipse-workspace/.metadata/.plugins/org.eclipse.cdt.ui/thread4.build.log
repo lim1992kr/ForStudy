@@ -1,0 +1,7 @@
+14:36:03 **** Clean-only build of configuration Debug for project thread4 ****
+make clean 
+rm -rf  ./src/thread4.o  ./src/thread4.d  thread4
+ 
+
+14:36:04 Build Finished. 0 errors, 0 warnings. (took 767ms)
+

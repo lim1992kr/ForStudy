@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+void error_handling(char *message);
+
+int main (int argc, char *argv[])   //argc 는 뒤에오는 거 갯수 *argv 뒤에 오는 자료.
+{
+	int sock;
+	struct sockaddr_in serv_addr;
+	char message[30] ;
+	int str_len;
+	
+	if(argc != 3)
+	{
+			printf("usage : %s <IP> <port>\n", argv[0]);
+			exit(1);
+	} 
+	
+	sock = socket(PF_INET, SOCK_STREAM, 0); //소캣을 생성한다.
+	if(sock == -1)  //잘못실행되면 보통 -1값 대부분의 마이너스값은 에러코드
+			error_handling("socket() error");
+	//파일을 열면 파일의 디스크립터 값을 가지고 가서 오픈한다.
+	
+	memset(&serv_addr,0,sizeof(serv_addr));
+	serv_addr.sin_family=AF_INET;
+	serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
+	serv_addr.sin_port = htons(atoi(argv[2]));
+	
+	if(connect(sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))==-1)
+		error_handling("connect() error!");
+		
+	//read, write
+	str_len = read(sock, message, sizeof(message)-1);
+	if(str_len == -1)
+		error_handling("read() error!");
+		
+	
+	printf("message from server :%s \n", message);
+	close(sock);
+	return 0;
+}
+
+void error_handling(char *message)
+{
+	fputs(message, stderr);
+	fputc('\n',stderr);
+	exit(1);
+}

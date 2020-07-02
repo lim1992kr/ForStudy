@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;18_chat_clnt/src/chat_clnt.c&apos; to &apos;18_chat_clnt.c&apos;" description="Rename resource &apos;chat_clnt.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/chat_clnt.c" name="18_chat_clnt.c" stamp="1592982622097" updateReferences="true"/>
+</session>

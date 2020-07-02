@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;18_thread1.c/src/18_thread1.c.c&apos; to &apos;18_thread1.c&apos;" description="Rename resource &apos;18_thread1.c.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/18_thread1.c.c" name="18_thread1.c" stamp="1592967075357" updateReferences="true"/>
+</session>

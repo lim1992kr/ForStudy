@@ -1,0 +1,7 @@
+11:29:05 **** Clean-only build of configuration Debug for project 09_reuseadr_eserver ****
+make clean 
+rm -rf  ./src/09_reuseadr_eserver.o  ./src/09_reuseadr_eserver.d  09_reuseadr_eserver
+ 
+
+11:29:06 Build Finished. 0 errors, 0 warnings. (took 841ms)
+

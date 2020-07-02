@@ -1,0 +1,7 @@
+11:29:07 **** Clean-only build of configuration Debug for project 09_sock_type ****
+make clean 
+rm -rf  ./src/09_sock_type.o  ./src/09_sock_type.d  09_sock_type
+ 
+
+11:29:07 Build Finished. 0 errors, 0 warnings. (took 806ms)
+

@@ -1,0 +1,7 @@
+11:29:06 **** Clean-only build of configuration Debug for project 09_set_buf ****
+make clean 
+rm -rf  ./src/09_set_buf.o  ./src/09_set_buf.d  09_set_buf
+ 
+
+11:29:07 Build Finished. 0 errors, 0 warnings. (took 901ms)
+

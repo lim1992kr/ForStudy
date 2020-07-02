@@ -1,0 +1,15 @@
+12:05:54 **** Build of configuration Debug for project 09_get_buf ****
+make all 
+Building file: ../src/09_get_buf.c
+Invoking: GCC C Compiler
+gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/09_get_buf.d" -MT"src/09_get_buf.o" -o "src/09_get_buf.o" "../src/09_get_buf.c"
+Finished building: ../src/09_get_buf.c
+ 
+Building target: 09_get_buf
+Invoking: GCC C Linker
+gcc  -o "09_get_buf"  ./src/09_get_buf.o   
+Finished building target: 09_get_buf
+ 
+
+12:05:55 Build Finished. 0 errors, 0 warnings. (took 990ms)
+

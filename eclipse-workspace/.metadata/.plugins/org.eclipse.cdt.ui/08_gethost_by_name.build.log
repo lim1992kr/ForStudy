@@ -1,0 +1,6 @@
+16:23:27 **** Incremental Build of configuration Debug for project 08_gethost_by_name ****
+make all 
+make: 'all'을(를) 위해 할 일이 없습니다.
+
+16:23:28 Build Finished. 0 errors, 0 warnings. (took 906ms)
+

@@ -1,0 +1,15 @@
+16:21:38 **** Build of configuration Debug for project 05_op_client ****
+make all 
+Building file: ../src/05_op_client.c
+Invoking: GCC C Compiler
+gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/05_op_client.d" -MT"src/05_op_client.o" -o "src/05_op_client.o" "../src/05_op_client.c"
+Finished building: ../src/05_op_client.c
+ 
+Building target: 05_op_client
+Invoking: GCC C Linker
+gcc  -o "05_op_client"  ./src/05_op_client.o   
+Finished building target: 05_op_client
+ 
+
+16:21:39 Build Finished. 0 errors, 0 warnings. (took 1s.34ms)
+

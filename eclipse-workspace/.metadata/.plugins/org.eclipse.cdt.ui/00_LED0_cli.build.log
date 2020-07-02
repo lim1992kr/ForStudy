@@ -1,0 +1,19 @@
+11:05:46 **** Incremental Build of configuration Debug for project 00_LED0_cli ****
+make all 
+Building file: ../src/00_LED0_cli.c
+Invoking: GCC C Compiler
+gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/00_LED0_cli.d" -MT"src/00_LED0_cli.o" -o "src/00_LED0_cli.o" "../src/00_LED0_cli.c"
+../src/00_LED0_cli.c: In function ‘main’:
+../src/00_LED0_cli.c:16:6: warning: unused variable ‘str_len’ [-Wunused-variable]
+   16 |  int str_len;
+      |      ^~~~~~~
+Finished building: ../src/00_LED0_cli.c
+ 
+Building target: 00_LED0_cli
+Invoking: GCC C Linker
+gcc  -o "00_LED0_cli"  ./src/00_LED0_cli.o   
+Finished building target: 00_LED0_cli
+ 
+
+11:05:47 Build Finished. 0 errors, 1 warnings. (took 945ms)
+

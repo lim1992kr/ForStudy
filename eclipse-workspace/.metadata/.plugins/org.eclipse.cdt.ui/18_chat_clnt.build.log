@@ -1,0 +1,15 @@
+16:50:10 **** Incremental Build of configuration Debug for project 18_chat_clnt ****
+make all 
+Building file: ../src/18_chat_clnt.c
+Invoking: GCC C Compiler
+gcc -D_REENTRANT -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/18_chat_clnt.d" -MT"src/18_chat_clnt.o" -o "src/18_chat_clnt.o" "../src/18_chat_clnt.c"
+Finished building: ../src/18_chat_clnt.c
+ 
+Building target: 18_chat_clnt
+Invoking: GCC C Linker
+gcc  -o "18_chat_clnt"  ./src/18_chat_clnt.o   -lpthread
+Finished building target: 18_chat_clnt
+ 
+
+16:50:11 Build Finished. 0 errors, 0 warnings. (took 955ms)
+

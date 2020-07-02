@@ -1,0 +1,6 @@
+16:21:41 **** Build of configuration Debug for project 06_file_server ****
+make all 
+make: 'all'을(를) 위해 할 일이 없습니다.
+
+16:21:41 Build Finished. 0 errors, 0 warnings. (took 942ms)
+

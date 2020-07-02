@@ -1,0 +1,6 @@
+15:52:59 **** Incremental Build of configuration Debug for project semapore ****
+make all 
+make: 'all'을(를) 위해 할 일이 없습니다.
+
+15:53:00 Build Finished. 0 errors, 0 warnings. (took 811ms)
+

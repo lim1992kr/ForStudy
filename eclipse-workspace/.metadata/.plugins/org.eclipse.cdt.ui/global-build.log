@@ -1,0 +1,6 @@
+12:05:55 **** Incremental Build of configuration Debug for project 18_thread1.c ****
+make all 
+make: 'all'을(를) 위해 할 일이 없습니다.
+12:06:11 **** Incremental Build of configuration Debug for project 18_thread1-1 ****
+make all 
+make: 'all'을(를) 위해 할 일이 없습니다.
