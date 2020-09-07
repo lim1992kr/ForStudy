@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: bebop_point_to_point
+Description: Description of bebop_point_to_point
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
