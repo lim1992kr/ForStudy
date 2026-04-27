@@ -1,0 +1,6 @@
+pymavlink>=2.4.41
+matplotlib>=3.8.0
+python-docx>=1.1.0
+PyYAML>=6.0.1
+numpy>=1.26.0
+pandas>=2.0.0
