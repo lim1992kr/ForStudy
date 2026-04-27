@@ -1,13 +1,28 @@
 """그래프 생성 모듈."""
 from __future__ import annotations
 
+import struct
+import zlib
 from pathlib import Path
 from typing import Dict, List
 
-import matplotlib.pyplot as plt
-
 from .log_parser import ParsedLog
 from .utils import RunConfig
+
+
+
+def _write_placeholder_png(path: Path, width: int = 640, height: int = 240) -> None:
+    """matplotlib 미설치 시 사용할 단색 PNG 생성기."""
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+    raw = b"".join(b"\x00" + b"\xEE\xEE\xEE" * width for _ in range(height))
+    png = b"\x89PNG\r\n\x1a\n"
+    png += chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+    png += chunk(b"IDAT", zlib.compress(raw, 9))
+    png += chunk(b"IEND", b"")
+    path.write_bytes(png)
 
 
 
@@ -20,6 +35,12 @@ def _save_single_plot(
     cfg: RunConfig,
     mode_changes: List[dict] | None = None,
 ) -> None:
+    try:
+        import matplotlib.pyplot as plt  # type: ignore
+    except ImportError:
+        _write_placeholder_png(out_path)
+        return
+
     plt.style.use(cfg.plot_style)
     fig, ax = plt.subplots(figsize=(10, 3.8))
 
@@ -45,7 +66,6 @@ def _save_single_plot(
 
 
 def generate_plots(parsed: ParsedLog, out_dir: Path, cfg: RunConfig) -> Dict[str, Path]:
-    """요구된 5개 PNG 그래프 생성."""
     out_dir.mkdir(parents=True, exist_ok=True)
 
     plot_paths = {

@@ -1,30 +1,21 @@
-"""ArduPilot DataFlash BIN 파서.
-
-요구사항 반영:
-- pymavlink로 DataFlash BIN을 읽고 메시지별 DataFrame 생성
-- TimeUS 기준 elapsed_sec 생성
-- ATT/BAT/CTUN/BARO/GPS/MODE/ERR/MSG 추출
-- 메시지 없을 때 빈 DataFrame 반환
-- 사용 가능한 메시지 타입 목록 콘솔 출력
-"""
+"""ArduPilot DataFlash BIN 파서."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import pandas as pd
+try:
+    import pandas as pd  # type: ignore
+except ImportError:  # pragma: no cover
+    pd = None
 
 
 @dataclass
 class ParsedLog:
-    """파싱 결과 컨테이너.
+    """파싱 결과 컨테이너."""
 
-    - frames: 메시지별 원본 DataFrame
-    - 나머지 리스트 필드: 기존 metrics/plotter와의 호환성을 위한 추출 결과
-    """
-
-    frames: Dict[str, pd.DataFrame] = field(default_factory=dict)
+    frames: Dict[str, Any] = field(default_factory=dict)
 
     time_s: List[float] = field(default_factory=list)
     altitude_m: List[float] = field(default_factory=list)
@@ -44,9 +35,15 @@ class ParsedLog:
 TARGET_MESSAGES = ["ATT", "BAT", "CTUN", "BARO", "GPS", "MODE", "ERR", "MSG"]
 
 
+class EmptyFrame:
+    """pandas 미설치 환경에서 빈 DataFrame 대체체."""
+
+    empty = True
+    columns: List[str] = []
+
+
 
 def _to_row(msg: Any) -> Dict[str, Any]:
-    """mavlink message -> dict 변환 (안전)."""
     if hasattr(msg, "to_dict"):
         row = msg.to_dict()
     else:
@@ -56,41 +53,23 @@ def _to_row(msg: Any) -> Dict[str, Any]:
 
 
 
-def _ensure_elapsed(df: pd.DataFrame) -> pd.DataFrame:
-    """TimeUS 기반 elapsed_sec 컬럼 추가."""
-    if df.empty:
-        df["elapsed_sec"] = pd.Series(dtype="float64")
-        return df
-
-    if "TimeUS" in df.columns:
-        base = df["TimeUS"].dropna().iloc[0] if not df["TimeUS"].dropna().empty else None
-        if base is not None:
-            df["elapsed_sec"] = (pd.to_numeric(df["TimeUS"], errors="coerce") - float(base)) / 1_000_000.0
-            return df
-
-    # TimeUS가 없는 메시지는 elapsed_sec를 NaN으로 두고 후단에서 보정
-    df["elapsed_sec"] = pd.Series([pd.NA] * len(df), dtype="float64")
-    return df
-
-
-
-def _extract_numeric(df: pd.DataFrame, col: str) -> List[float]:
+def _extract_numeric(df: Any, col: str) -> List[float]:
+    if pd is None:
+        return []
     if df.empty or col not in df.columns:
         return []
-    series = pd.to_numeric(df[col], errors="coerce").dropna()
-    return series.tolist()
+    return pd.to_numeric(df[col], errors="coerce").dropna().tolist()
 
 
 
-def _extract_elapsed(df: pd.DataFrame) -> List[float]:
-    if df.empty or "elapsed_sec" not in df.columns:
+def _extract_elapsed(df: Any) -> List[float]:
+    return _extract_numeric(df, "elapsed_sec")
+
+
+
+def _choose_altitude(ctun_df: Any, baro_df: Any) -> List[float]:
+    if pd is None:
         return []
-    series = pd.to_numeric(df["elapsed_sec"], errors="coerce").dropna()
-    return series.tolist()
-
-
-
-def _choose_altitude(ctun_df: pd.DataFrame, baro_df: pd.DataFrame) -> List[float]:
     if not ctun_df.empty and "Alt" in ctun_df.columns:
         return _extract_numeric(ctun_df, "Alt")
     if not baro_df.empty and "Alt" in baro_df.columns:
@@ -100,9 +79,14 @@ def _choose_altitude(ctun_df: pd.DataFrame, baro_df: pd.DataFrame) -> List[float
 
 
 def parse_bin_log(bin_path: Path, print_available_messages: bool = True) -> ParsedLog:
-    """BIN 파일 파싱 (실로그 전용)."""
+    """BIN 파일 파싱.
+
+    참고: 실로그 파싱에는 pandas + pymavlink가 필요하다.
+    """
     if not bin_path.exists():
         raise FileNotFoundError(f"BIN 로그 파일을 찾을 수 없습니다: {bin_path}")
+    if pd is None:
+        raise ImportError("pandas가 설치되어 있지 않아 BIN 파싱을 수행할 수 없습니다.")
 
     try:
         from pymavlink import mavutil
@@ -118,10 +102,8 @@ def parse_bin_log(bin_path: Path, print_available_messages: bool = True) -> Pars
         msg = mlog.recv_match(blocking=False)
         if msg is None:
             break
-
         mtype = msg.get_type()
         available_types.add(mtype)
-
         if mtype in TARGET_MESSAGES:
             rows_by_type.setdefault(mtype, []).append(_to_row(msg))
 
@@ -129,41 +111,34 @@ def parse_bin_log(bin_path: Path, print_available_messages: bool = True) -> Pars
         listed = ", ".join(sorted(available_types)) if available_types else "(없음)"
         print(f"[INFO] 로그에서 확인된 메시지 타입: {listed}")
 
-    # 요구 메시지는 없더라도 빈 DataFrame 생성
-    frames: Dict[str, pd.DataFrame] = {}
+    frames: Dict[str, Any] = {}
     for key in TARGET_MESSAGES:
         df = pd.DataFrame(rows_by_type.get(key, []))
-        df = _ensure_elapsed(df)
+        if df.empty:
+            df["elapsed_sec"] = pd.Series(dtype="float64")
+        elif "TimeUS" in df.columns and not df["TimeUS"].dropna().empty:
+            base = float(df["TimeUS"].dropna().iloc[0])
+            df["elapsed_sec"] = (pd.to_numeric(df["TimeUS"], errors="coerce") - base) / 1_000_000.0
+        else:
+            df["elapsed_sec"] = pd.Series([pd.NA] * len(df), dtype="float64")
         frames[key] = df
 
     parsed = ParsedLog(frames=frames)
+    att_df, bat_df, ctun_df, baro_df = frames["ATT"], frames["BAT"], frames["CTUN"], frames["BARO"]
+    gps_df, mode_df, err_df, msg_df = frames["GPS"], frames["MODE"], frames["ERR"], frames["MSG"]
 
-    att_df = frames["ATT"]
-    bat_df = frames["BAT"]
-    ctun_df = frames["CTUN"]
-    baro_df = frames["BARO"]
-    gps_df = frames["GPS"]
-    mode_df = frames["MODE"]
-    err_df = frames["ERR"]
-    msg_df = frames["MSG"]
-
-    # ATT
     parsed.time_s = _extract_elapsed(att_df)
     parsed.roll_deg = _extract_numeric(att_df, "Roll")
     parsed.pitch_deg = _extract_numeric(att_df, "Pitch")
-
-    # 고도(CTUN 우선, 없으면 BARO)
     parsed.altitude_m = _choose_altitude(ctun_df, baro_df)
 
-    # BAT
     parsed.volt_v = _extract_numeric(bat_df, "Volt")
     parsed.curr_a = _extract_numeric(bat_df, "Curr")
     parsed.currtot_mah = _extract_numeric(bat_df, "CurrTot")
 
     if not bat_df.empty:
-        inst_col = "Instance" if "Instance" in bat_df.columns else None
-        if inst_col:
-            for inst_val, sub in bat_df.groupby(inst_col):
+        if "Instance" in bat_df.columns:
+            for inst_val, sub in bat_df.groupby("Instance"):
                 inst = int(inst_val) if pd.notna(inst_val) else 0
                 parsed.battery_instances[inst] = {
                     "volt": _extract_numeric(sub, "Volt"),
@@ -171,13 +146,8 @@ def parse_bin_log(bin_path: Path, print_available_messages: bool = True) -> Pars
                     "currtot": _extract_numeric(sub, "CurrTot"),
                 }
         else:
-            parsed.battery_instances[0] = {
-                "volt": parsed.volt_v,
-                "curr": parsed.curr_a,
-                "currtot": parsed.currtot_mah,
-            }
+            parsed.battery_instances[0] = {"volt": parsed.volt_v, "curr": parsed.curr_a, "currtot": parsed.currtot_mah}
 
-    # GPS
     if not gps_df.empty:
         parsed.gps_time_s = _extract_elapsed(gps_df)
         lat_list = _extract_numeric(gps_df, "Lat")
@@ -185,24 +155,16 @@ def parse_bin_log(bin_path: Path, print_available_messages: bool = True) -> Pars
         parsed.gps_lat = [v / 1e7 if abs(v) > 180 else v for v in lat_list]
         parsed.gps_lng = [v / 1e7 if abs(v) > 180 else v for v in lng_list]
 
-    # MODE
     if not mode_df.empty:
-        mode_val_col: Optional[str] = None
-        for col in ["Mode", "ModeNum", "mode"]:
-            if col in mode_df.columns:
-                mode_val_col = col
-                break
-
+        mode_col = next((c for c in ["Mode", "ModeNum", "mode"] if c in mode_df.columns), None)
         for _, row in mode_df.iterrows():
             t = row.get("elapsed_sec", pd.NA)
-            mode_v = row.get(mode_val_col, "UNKNOWN") if mode_val_col else "UNKNOWN"
+            mode_v = row.get(mode_col, "UNKNOWN") if mode_col else "UNKNOWN"
             parsed.mode_changes.append({"t": float(t) if pd.notna(t) else 0.0, "mode": str(mode_v)})
 
-    # ERR/MSG -> events
     for _, row in err_df.iterrows():
         t = row.get("elapsed_sec", pd.NA)
         parsed.events.append({"t": float(t) if pd.notna(t) else 0.0, "type": "ERR", "raw": str(dict(row))})
-
     for _, row in msg_df.iterrows():
         t = row.get("elapsed_sec", pd.NA)
         parsed.events.append({"t": float(t) if pd.notna(t) else 0.0, "type": "MSG", "raw": str(dict(row))})
@@ -212,10 +174,15 @@ def parse_bin_log(bin_path: Path, print_available_messages: bool = True) -> Pars
 
 
 def create_mock_parsed_log(duration_s: int = 900) -> ParsedLog:
-    """개발/디버깅용 mock 데이터 생성."""
+    """개발/디버깅용 mock 데이터 생성.
+
+    pandas 미설치 환경도 지원한다.
+    """
     import math
 
-    parsed = ParsedLog(frames={k: pd.DataFrame() for k in TARGET_MESSAGES})
+    frames = {k: (pd.DataFrame() if pd is not None else EmptyFrame()) for k in TARGET_MESSAGES}
+    parsed = ParsedLog(frames=frames)
+
     for i in range(duration_s):
         t = float(i)
         parsed.time_s.append(t)
@@ -226,7 +193,7 @@ def create_mock_parsed_log(duration_s: int = 900) -> ParsedLog:
         parsed.curr_a.append(22 + 10 * abs(math.sin(i / 18)))
         parsed.currtot_mah.append(i * 8.0)
 
-    base_lat, base_lng = 37.0000, 127.0000
+    base_lat, base_lng = 37.0, 127.0
     for i in range(0, duration_s, 2):
         parsed.gps_lat.append(base_lat + i * 0.00001)
         parsed.gps_lng.append(base_lng + i * 0.00001)
