@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+outputs/plots/*
+!outputs/plots/.gitkeep
+outputs/reports/*
+!outputs/reports/.gitkeep

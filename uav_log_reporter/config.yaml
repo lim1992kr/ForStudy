@@ -1,0 +1,13 @@
+thresholds:
+  roll_warning_deg: 35
+  pitch_warning_deg: 25
+  voltage_warning_v: 34.0
+  current_warning_a: 100
+
+report:
+  default_purpose: "검증비행"
+  timezone: "UTC"
+
+plot:
+  dpi: 140
+  style: "seaborn-v0_8-whitegrid"
